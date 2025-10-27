@@ -1,0 +1,19 @@
+{
+  "name": "rentify-socket-backend",
+  "version": "1.0.0",
+  "description": "Socket.IO backend for Rentify application",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
