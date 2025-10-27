@@ -12,7 +12,7 @@ const httpServer = createServer();
 
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || "https://rentify-bice-one.vercel.app",
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST"]
   }
 });
