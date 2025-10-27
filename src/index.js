@@ -8,6 +8,23 @@ import { JWT_SECRET, getUserRoom } from '../config.js';
 
 const port = process.env.PORT || 3001;
 
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 const httpServer = createServer();
 
 const io = new Server(httpServer, {
@@ -15,6 +32,46 @@ const io = new Server(httpServer, {
     origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST"]
   }
+});
+
+// Handle HTTP requests
+httpServer.on('request', (req, res) => {
+  // Set CORS headers for all responses
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/emit-notification') {
+    parseBody(req)
+      .then(data => {
+        const { userId, notification } = data;
+        if (!userId || !notification) {
+          throw new Error('Missing userId or notification');
+        }
+
+        // Emit to user room
+        const room = getUserRoom(userId);
+        io.to(room).emit('notification', notification);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      })
+      .catch(error => {
+        console.error('Error emitting notification:', error);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: error.message }));
+      });
+    return;
+  }
+
+  res.writeHead(404, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ error: 'Not found' }));
 });
 
 // Socket.IO middleware for authentication
