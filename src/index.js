@@ -48,9 +48,12 @@ httpServer.on('request', (req, res) => {
   }
 
   if (req.method === 'POST' && req.url === '/emit-notification') {
+    console.log('🔄 Received emit-notification request');
     parseBody(req)
       .then(data => {
         const { userId, notification } = data;
+        console.log(`📢 Emitting notification to user ${userId}:`, notification.title);
+
         if (!userId || !notification) {
           throw new Error('Missing userId or notification');
         }
@@ -59,11 +62,12 @@ httpServer.on('request', (req, res) => {
         const room = getUserRoom(userId);
         io.to(room).emit('notification', notification);
 
+        console.log(`✓ Notification emitted to room: ${room}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true }));
       })
       .catch(error => {
-        console.error('Error emitting notification:', error);
+        console.error('❌ Error emitting notification:', error);
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: error.message }));
       });
